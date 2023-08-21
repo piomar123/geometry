@@ -59,6 +59,26 @@ double crossProductZValue(const Vector2d & p, const Vector2d & q, const Vector2d
 	return (p.x * q.y) + (q.x * r.y) + (r.x * p.y) - (q.y * r.x) - (r.y * p.x) - (p.y * q.x);
 }
 
+template <typename T>
+std::deque<Vector2d> _findHalfHull(const T& input_iterator, const T& end_iterator) {
+	std::deque<Vector2d> hull;
+	for (std::vector<Vector2d>::const_iterator it = input_iterator; it != end_iterator; it++) {
+		hull.push_back(*it);
+		while (hull.size() >= 3) {
+			const auto& lastPoint = hull[hull.size() - 1];
+			const auto& middlePoint = hull[hull.size() - 2];
+			const auto& thirdPoint = hull[hull.size() - 3];
+			bool lastThreePointsMakeRightTurn = crossProductZValue(thirdPoint, middlePoint, lastPoint) < 0;
+			if (lastThreePointsMakeRightTurn) {
+				break;
+			}
+			hull.erase(std::prev(hull.end(), 2));
+		}
+	}
+	return hull;
+}
+
+
 void QuickConvexHull(const std::vector<Vector2d>& inputPoints, std::vector<std::pair<Vector2d, Vector2d>>& lines) {
 	if (inputPoints.empty()) {
 		return;
@@ -66,42 +86,9 @@ void QuickConvexHull(const std::vector<Vector2d>& inputPoints, std::vector<std::
 	lines.clear();
 	std::vector<Vector2d> points = inputPoints;
 	std::sort(points.begin(), points.end());
-	std::deque<Vector2d> upper;
-	std::deque<Vector2d> lower;
+	std::deque<Vector2d> upper = _findHalfHull(points.begin(), points.end());
+	std::deque<Vector2d> lower = _findHalfHull(points.rbegin(), points.rend());
 
-	for (auto it = points.begin(); it != points.end(); it++) {
-		upper.push_back(*it);
-		while (true) {
-			if (upper.size() < 3) {
-				break;
-			}
-			const auto& lastPoint = upper[upper.size() - 1];
-			const auto& middlePoint = upper[upper.size() - 2];
-			const auto& thirdPoint = upper[upper.size() - 3];
-			bool lastThreePointsMakeRightTurn = crossProductZValue(thirdPoint, middlePoint, lastPoint) < 0;
-			if (lastThreePointsMakeRightTurn) {
-				break;
-			}
-			upper.erase(std::prev(upper.end(), 2));
-		}
-	}
-
-	for (auto it = points.rbegin(); it != points.rend(); it++) {
-		lower.push_back(*it);
-		while (true) {
-			if (lower.size() < 3) {
-				break;
-			}
-			const auto& lastPoint = lower[lower.size() - 1];
-			const auto& middlePoint = lower[lower.size() - 2];
-			const auto& thirdPoint = lower[lower.size() - 3];
-			bool lastThreePointsMakeRightTurn = crossProductZValue(thirdPoint, middlePoint, lastPoint) < 0;
-			if (lastThreePointsMakeRightTurn) {
-				break;
-			}
-			lower.erase(std::prev(lower.end(), 2));
-		}
-	}
 	for (size_t i = 0; i < upper.size() - 1; i++) {
 		lines.push_back(std::make_pair(upper[i], upper[i + 1]));
 	}
@@ -145,9 +132,10 @@ void DisplayScene() {
 	for (size_t i = 0; i < lines.size(); i++) {
 		const auto &p1 = lines[i].first;
 		const auto &p2 = lines[i].second;
-		glColor4fv(lineOriginColor);
+		const float red = float(i + 1) / lines.size();
+		glColor4f(red, red, red, 1.0f);
 		glVertex2d(p1.x, p1.y);
-		glColor4fv(lineEndColor);
+		glColor4f(red, red, 0.f, 1.0f);
 		glVertex2d(p2.x, p2.y);
 	}
 	glEnd();
