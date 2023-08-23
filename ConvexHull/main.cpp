@@ -56,13 +56,13 @@ If result < 0 then point r is on the right side of the vector p->q
 If result == 0 then point r is in line with vector p->q
 */
 double crossProductZValue(const Vector2d & p, const Vector2d & q, const Vector2d & r) {
-	return (p.x * q.y) + (q.x * r.y) + (r.x * p.y) - (q.y * r.x) - (r.y * p.x) - (p.y * q.x);
+	return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
 }
 
 template <typename T>
 std::deque<Vector2d> _findHalfHull(const T& input_iterator, const T& end_iterator) {
 	std::deque<Vector2d> hull;
-	for (std::vector<Vector2d>::const_iterator it = input_iterator; it != end_iterator; it++) {
+	for (T it = input_iterator; it != end_iterator; it++) {
 		hull.push_back(*it);
 		while (hull.size() >= 3) {
 			const auto& lastPoint = hull[hull.size() - 1];
@@ -140,7 +140,7 @@ void DisplayScene() {
 	}
 	glEnd();
 
-	glPointSize(8.);
+	glPointSize(6.);
 	glBegin(GL_POINTS);
 	for (auto &p : points) {
 		glColor4fv(colors);
@@ -244,7 +244,7 @@ int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 #endif
 
-	GenerateRandomPoints(50, points);
+	GenerateRandomPoints(10000, points);
 	QuickConvexHull(points, lines);
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_MULTISAMPLE);
